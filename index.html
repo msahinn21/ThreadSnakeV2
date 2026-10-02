@@ -52,6 +52,14 @@ html,body{margin:0;padding:0;height:100%;background:var(--ground);color:var(--cr
 .spool .reel{position:absolute;left:0;top:-3px;width:12px;height:18px;border-left:4px solid #6b4a2b;border-right:4px solid #6b4a2b}
 .spool .reel::after{content:"";position:absolute;left:0;top:5px;width:4px;height:8px;background:#ffb347}
 .spool .needle{position:absolute;right:0;top:5px;width:14px;height:2px;background:#e8ecf2;border-radius:1px}
+.timer{position:absolute;left:50%;top:calc(100% - 4px);transform:translateX(-50%);height:30px;display:flex;align-items:center;gap:4px;padding:0 11px 0 5px;border-radius:15px;
+  background:linear-gradient(180deg,#c48cf5,#8a4bd0);border:2px solid var(--plum-dk);box-shadow:0 4px 0 rgba(0,0,0,.35)}
+.timer svg{width:22px;height:22px;display:block}
+.timer b{font-family:var(--display);font-size:19px;color:#fff;text-shadow:0 2px 0 var(--ink);line-height:1;min-width:38px;text-align:center;font-variant-numeric:tabular-nums}
+.timer.low{background:linear-gradient(180deg,#ff7a6b,#e0393e);border-color:#7a1418}
+.timer.beat{animation:beat .45s ease-out}
+.timer[hidden]{display:none}
+@keyframes beat{0%{transform:translateX(-50%) scale(1.3)}100%{transform:translateX(-50%) scale(1)}}
 #joy{position:absolute;width:132px;height:132px;border-radius:50%;background:rgba(0,0,0,.28);border:2px dashed rgba(246,231,200,.55);display:none;transform:translate(-50%,-50%)}
 #joy .knob{position:absolute;left:50%;top:50%;width:58px;height:58px;border-radius:50%;background:linear-gradient(180deg,#c48cf5,#8a4bd0);border:3px solid var(--plum-dk);box-shadow:0 4px 0 rgba(0,0,0,.35);transform:translate(-50%,-50%)}
 .boosters{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(30px + var(--safeB));display:flex;gap:30px}
@@ -100,6 +108,7 @@ h2{font-size:34px}
 .stats{display:flex;justify-content:center;gap:10px;margin:14px 0 18px;flex-wrap:wrap}
 .stats span{flex:1 1 0;min-width:0;background:rgba(0,0,0,.28);border-radius:14px;padding:8px 6px;font-size:11px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;white-space:nowrap}
 .stats b{display:block;font-family:var(--display);font-size:22px;color:#fff;font-variant-numeric:tabular-nums;text-transform:none;letter-spacing:0}
+.stats i{font-style:normal}
 .btn{display:block;width:100%;margin:10px 0 0;padding:14px 18px;border:0;border-radius:18px;font-family:var(--display);font-size:22px;font-weight:800;color:var(--ink);cursor:pointer;touch-action:manipulation;
   background:linear-gradient(180deg,#ffe27a,#ffb545);box-shadow:0 6px 0 #b8651a,0 10px 18px rgba(0,0,0,.35);transition:transform .08s,box-shadow .08s}
 .btn:active{transform:translateY(4px);box-shadow:0 2px 0 #b8651a}
@@ -135,6 +144,7 @@ h2{font-size:34px}
   <div class="hud" id="hud">
     <div class="col left"><span class="tab">HEDEF</span><div id="slots"></div></div>
     <div class="col right"><span class="tab">PUAN</span><span id="score">0</span><div class="spool"><span class="reel"></span><span class="bar"></span><span class="fill" id="spool"></span><span class="needle"></span></div></div>
+    <div class="timer" id="timer"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9.5" y="0.5" width="5" height="3.2" rx="1.2" fill="#f6e7c8"/><circle cx="12" cy="14" r="9" fill="#3a1a5c" stroke="#f6e7c8" stroke-width="2"/><circle id="t-pie" cx="12" cy="14" r="3.6" fill="none" stroke="#ffd23f" stroke-width="7.2" stroke-dasharray="22.62" transform="translate(24 0) scale(-1 1) rotate(-90 12 14)"/></svg><b id="t-time">1:00</b></div>
   </div>
   <div id="joy"><div class="knob"></div></div>
   <div id="arrow"><i></i><img alt=""></div>
@@ -160,7 +170,7 @@ h2{font-size:34px}
       <span>Örgü<b id="s-knits">0</b></span>
     </div>
     <button class="btn" id="btn-play">Oyna</button>
-    <p class="hint">Her bölümün bir hedefi var (örn. 15 mavi). Yılan sürekli ileri kayar; joystick (ya da ok tuşları) yönünü değiştirir. Hedef dışı yumaklar puan verir ama gövdeyi uzatır ve hızlandırır. Tek fail: kendi gövdene çarpmak. Süre yok.</p>
+    <p class="hint">Her bölümün bir hedefi ve süresi var (örn. 60 sn içinde 15 mavi). Yılan sürekli ileri kayar; joystick (ya da ok tuşları) yönünü değiştirir. Hedef dışı yumaklar puan verir ama gövdeyi uzatır ve hızlandırır. Fail: süre biterse ya da kendi gövdene çarparsan.</p>
   </section>
   <section id="scr-complete" class="panel" hidden>
     <h2>Hedef Tamamlandı!</h2>
@@ -171,7 +181,7 @@ h2{font-size:34px}
       <p id="c-knitline">Terzi örgüyü teslim aldı.</p>
     </div>
     <div class="stats">
-      <span>Süre<b id="c-time">0</b></span>
+      <span><i id="c-time-l">Kalan Süre</i><b id="c-time">0</b></span>
       <span>Kombo<b id="c-combo">0</b></span>
       <span>Puan<b id="c-score">0</b></span>
     </div>
@@ -206,7 +216,7 @@ h2{font-size:34px}
 /* =====================================================================
    THREAD SNAKE V2 — 3D düzlem + joystick prototipi (Three.js r158, yerel src/three.min.js)
    Mekanik: kadife kumaş düzlemde yılan sürekli ileri kayar, joystick yönünü değiştirir (dönüş hızı sınırlı).
-   Win: bölüm hedefi (örn. ×15 mavi). Fail: kendi gövdesine çarpmak. Süre yok.
+   Win: süre dolmadan bölüm hedefi (örn. 60 sn içinde ×15 mavi). Fail: süre biterse ya da kendi gövdesine çarparsa.
    Bölümler: utils · ses · bölüm parametreleri · 2D ikonlar · Three sahne/doku · halat geometrisi ·
    oyun durumu · yumak spawn · hareket/çarpışma · booster · HUD/DOM efektleri · giriş · overlay · bot · mock/test
    ===================================================================== */
@@ -238,6 +248,7 @@ const DEBUG = params.get('debug') === '1';            // geliştirici: window.__
 const FORCE_LEVEL = parseInt(params.get('level') || '0', 10) || 0;
 const IDLE_STOP = params.get('idlestop') === '1';     // tasarım seçeneği: joystick bırakılınca yılan durur
 const MOCK = params.get('mock'); const SELFTEST = params.get('test') === '1';
+const TIME_OVR = params.has('time') ? Math.max(0, parseFloat(params.get('time')) || 0) : -1;   // ayar: ?time=N → her bölüm N sn (0 = süresiz)
 if (DEBUG) window.addEventListener('error', e => { const p = document.createElement('pre'); p.id = 'err-report'; p.textContent = e.message + ' @' + e.lineno; document.body.appendChild(p); });
 
 // ---------- sabitler ----------
@@ -253,6 +264,7 @@ const FABRICS = [
 ];
 const ROPE_R = 0.42, HEAD_R = 0.8, YARN_R = 0.55, SEG_LEN = 0.55, SAMPLE = 0.25, NECK = 2.6, RING = 10, MAX_RINGS = 1400, ROPE_PITCH = 1.7;
 const OBJ_W = [[1], [0.58, 0.42], [0.42, 0.32, 0.26]];
+const TIME_WARN = 10, TIME_CONT = 15;   // son 10 sn: kırmızı sayaç + tik; süre bitince Devam Et = +15 sn
 
 // ---------- ses (Web Audio, sentez) ----------
 const Sfx = (() => {
@@ -284,6 +296,8 @@ const Sfx = (() => {
     win() { [0, 4, 7, 12, 16, 19].forEach((s, i) => tone(392 * Math.pow(2, s / 12), 0.26, 'triangle', 0.17, i * 0.09)); },
     fail() { tone(330, 0.3, 'sawtooth', 0.1, 0, -100); tone(220, 0.55, 'sawtooth', 0.1, 0.25, -80); },
     hurt() { tone(200, 0.25, 'sawtooth', 0.14, 0, -120); noise(0.15, 0.12, 0, 600, 0.8); },
+    tick(s) { tone(s <= 3 ? 1320 : 990, 0.05, 'square', 0.06); },
+    buzz() { tone(196, 0.45, 'square', 0.09); tone(185, 0.45, 'square', 0.09); },
     boost() { noise(0.35, 0.1, 0, 900, 0.6); tone(300, 0.3, 'sine', 0.1, 0, 500); },
     snip() { noise(0.05, 0.22, 0, 3200, 2); noise(0.05, 0.22, 0.09, 2600, 2); },
     gate() { tone(520, 0.15, 'triangle', 0.14); tone(780, 0.28, 'triangle', 0.14, 0.12); },
@@ -293,11 +307,12 @@ const Sfx = (() => {
 
 // ---------- bölüm parametreleri ----------
 function levelConfig(n) {
-  const t = clamp((n - 1) / 9, 0, 1); const late = Math.max(0, n - 10);
+  const t = clamp((n - 1) / 9, 0, 1); const late = Math.max(0, n - 10); const objTotal = Math.min(40, Math.round(15 + 15 * t) + late);
   return {
     n,
     objectives: n <= 3 ? 1 : n <= 7 ? 2 : 3,                 // hedef renk sayısı (1 → 3)
-    objTotal: Math.min(40, Math.round(15 + 15 * t) + late),   // hedef yumak toplamı (15 → 30, sonra +1/bölüm)
+    objTotal,                                                 // hedef yumak toplamı (15 → 30, sonra +1/bölüm)
+    time: TIME_OVR >= 0 ? TIME_OVR : Math.round(objTotal * (4 - 0.8 * t) / 5) * 5,   // bölüm süresi (sn): hedef yumak başına 4.0 → 3.2 sn, 5'e yuvarlı (bölüm 1 = 60, bölüm 10 = 95)
     colors: 6,                                                // paletteki renk sayısı
     fixedColor: n === 1 ? 5 : n === 2 ? 4 : -1,               // bölüm 1 = mavi, bölüm 2 = kırmızı (konsept örnekleri), sonrası rastgele
     size: Math.round(34 + 14 * t),                            // kumaş kenar uzunluğu (birim)
@@ -518,9 +533,9 @@ function updateParticles(dt) {
 const S = {
   state: 'title', now: 0, lastT: 0, levelNo: FORCE_LEVEL || store.get('ts2_level', 1), total: store.get('ts2_total', 0), knits: store.get('ts2_knits', 0),
   head: { x: 0, z: 0 }, heading: -Math.PI / 2, targetHeading: -Math.PI / 2, joyActive: false, speed: 0, trail: [], trailLen: 0, body: [], bodyLen: 0, segs: [],
-  score: 0, colorCount: new Array(6).fill(0), comboColor: -1, comboRun: 0, combos: 0, headPop: 0, shake: 0, playT: 0, dist: 0,
+  score: 0, colorCount: new Array(6).fill(0), comboColor: -1, comboRun: 0, combos: 0, headPop: 0, shake: 0, playT: 0, dist: 0, timeLeft: 0,
   boosters: { magnet: 1, trim: 1, ghost: 1 }, fx: { magnet: 0, ghost: 0 }, continueUsed: false, continues: 0, trims: 0,
-  flyers: [], objPop: [], respawnQ: [], hintT: 0, celebrateT: 0, failT: 0, botT: 0, bumping: false, camX: 0, camZ: 0, prevState: 'ready'
+  flyers: [], objPop: [], respawnQ: [], hintT: 0, celebrateT: 0, failT: 0, failReason: '', botT: 0, bumping: false, camX: 0, camZ: 0, prevState: 'ready'
 };
 let level = null; let rng = mulberry32(1);
 function objLeft(o) { return Math.max(0, o.need - S.colorCount[o.color]); }
@@ -544,9 +559,9 @@ function startLevel(n) {
   const segs = []; for (let k = 0; k < cfg.startSegs; k++) segs.push({ color: BASE_COLOR, ci: -1, rgb: BASE_RGB });
   Object.assign(S, {
     state: 'ready', head: { x: 0, z: cfg.size * 0.18 }, heading: -Math.PI / 2, targetHeading: -Math.PI / 2, joyActive: false, speed: cfg.speed, trail: [], trailLen: 0, body: [], segs: [],
-    score: 0, colorCount: new Array(6).fill(0), comboColor: -1, comboRun: 0, combos: 0, headPop: 0, shake: 0, playT: 0, dist: 0,
+    score: 0, colorCount: new Array(6).fill(0), comboColor: -1, comboRun: 0, combos: 0, headPop: 0, shake: 0, playT: 0, dist: 0, timeLeft: cfg.time,
     boosters: { magnet: 1, trim: 1, ghost: 1 }, fx: { magnet: 0, ghost: 0 }, continueUsed: false, continues: 0, trims: 0,
-    flyers: [], objPop: new Array(objectives.length).fill(0), respawnQ: [], hintT: 0, celebrateT: 0, failT: 0, botT: 0, botTarget: null, botPick: 0, botEscape: 0, botReset: 0, lastCollect: 0, bumping: false, camX: 0, camZ: cfg.size * 0.18, prevState: 'ready'
+    flyers: [], objPop: new Array(objectives.length).fill(0), respawnQ: [], hintT: 0, celebrateT: 0, failT: 0, failReason: '', botT: 0, botTarget: null, botPick: 0, botEscape: 0, botReset: 0, lastCollect: 0, bumping: false, camX: 0, camZ: cfg.size * 0.18, prevState: 'ready'
   });
   S.bodyLen = bodyLenFor(0);
   // başlangıç izi: kafanın arkasında düz bir kuyruk
@@ -633,9 +648,22 @@ function updateSnake(dt) {
   if (S.fx.ghost <= 0) for (const b of S.body) { if (b.d < NECK) continue; if (Math.hypot(b.x - S.head.x, b.z - S.head.z) < HEAD_R * 0.5 + ROPE_R * 0.85) { selfCollide(); return; } }
   collectNear();
 }
+function failLevel(reason) {
+  S.failReason = reason; S.state = 'fail'; S.failT = 0.9; Sfx.fail(); $('flash').style.opacity = 1; setTimeout(() => { $('flash').style.opacity = 0; }, 350); hideJoy();
+}
 function selfCollide() {
   if (S.state !== 'run') return; S.shake = 1; Sfx.hurt(); burst3D(S.head.x, S.head.z, '#ff5252', 16); floater('KENDİNE ÇARPTIN!', S.head.x, S.head.z, '#ff6b6b');
-  S.state = 'fail'; S.failT = 0.9; Sfx.fail(); $('flash').style.opacity = 1; setTimeout(() => { $('flash').style.opacity = 0; }, 350); hideJoy();
+  failLevel('self');
+}
+function updateTimer(dt) {
+  // geri sayım yalnızca 'run' durumunda akar (hazır kartı, mola, fail/win ekranlarında durur); son kare toplanan yumak süreden önce sayılır
+  const before = Math.ceil(S.timeLeft - 1e-6); S.timeLeft = Math.max(0, S.timeLeft - dt); const sec = Math.ceil(S.timeLeft - 1e-6);
+  if (sec <= 0) { timeUp(); return; }
+  if (sec < before && sec <= TIME_WARN) Sfx.tick(sec);
+}
+function timeUp() {
+  if (S.state !== 'run') return; S.timeLeft = 0; S.shake = 0.5; Sfx.buzz(); floater('SÜRE BİTTİ!', S.head.x, S.head.z, '#ff6b6b');
+  failLevel('time');
 }
 function levelComplete() {
   if (S.state === 'complete') return; S.state = 'complete'; S.celebrateT = 1.6; Sfx.win(); confetti3D(160); hideJoy();
@@ -643,8 +671,10 @@ function levelComplete() {
   S.total += S.score; S.knits++; store.set('ts2_total', S.total); store.set('ts2_knits', S.knits); store.set('ts2_level', S.levelNo + 1);
 }
 function continueLevel() {
-  S.continueUsed = true; S.continues++; const cut = Math.floor(S.segs.length * 0.4); S.segs.splice(S.segs.length - cut, cut); S.bodyLen = bodyLenFor(S.segs.length); rebuildBody();
-  S.fx.ghost = 3; floater('HAYALET İLMEK · 3 sn', S.head.x, S.head.z, '#ffe27a'); S.state = 'run'; hideScreen();
+  S.continueUsed = true; S.continues++;
+  if (S.failReason === 'time') { S.timeLeft += TIME_CONT; floater('+' + TIME_CONT + ' SN', S.head.x, S.head.z, '#ffe27a'); }
+  else { const cut = Math.floor(S.segs.length * 0.4); S.segs.splice(S.segs.length - cut, cut); S.bodyLen = bodyLenFor(S.segs.length); rebuildBody(); S.fx.ghost = 3; floater('HAYALET İLMEK · 3 sn', S.head.x, S.head.z, '#ffe27a'); }
+  S.state = 'run'; hideScreen();
 }
 function startRun() { if (S.state !== 'ready') return; S.state = 'run'; $('card').hidden = true; $('hint').hidden = true; }
 function pauseGame() { if (S.state !== 'run' && S.state !== 'ready') return; S.prevState = S.state; S.state = 'paused'; hideJoy(); showScreen('pause'); }
@@ -669,11 +699,12 @@ function buildHUD() {
   const n = level.objectives.length; const hud = $('hud'); hud.className = 'hud n' + n; const box = $('slots'); box.innerHTML = '';
   slotEls = level.objectives.map((o, k) => { const el = document.createElement('div'); el.className = 'slot'; el.innerHTML = '<img alt=""><b>0</b><i class="chk"></i>'; el.querySelector('img').src = yarnIcon(o.color); box.appendChild(el); return el; });
   for (const k in hudCache) delete hudCache[k];
+  $('timer').hidden = !level.cfg.time; $('timer').classList.remove('low', 'beat');
 }
 function buildCard() {
   const n = level.objectives.length; const card = $('card'); card.className = n === 3 ? 'n3' : ''; const row = $('card-row'); row.innerHTML = '';
   for (const o of level.objectives) { const s = document.createElement('span'); s.innerHTML = '<img alt=""><b>×' + o.need + '</b>'; s.querySelector('img').src = yarnIcon(o.color); row.appendChild(s); }
-  $('card-txt').textContent = level.objectives.map(o => o.need + ' ' + YARN_COLORS[o.color].name).join(' + ') + ' yumak yut';
+  $('card-txt').textContent = (level.cfg.time ? level.cfg.time + ' sn içinde ' : '') + level.objectives.map(o => o.need + ' ' + YARN_COLORS[o.color].name).join(' + ') + ' yumak yut';
   card.hidden = false; $('hint').hidden = false; $('hint').textContent = 'Başlamak için dokun · joystick ile yön ver';
 }
 const BOOSTERS = [['magnet', 'Mıknatıs'], ['trim', 'Kırp'], ['ghost', 'Hayalet']];
@@ -690,6 +721,11 @@ function updateHUD() {
   setText('t-level', 'BÖLÜM ' + S.levelNo); setText('t-len', 'İLMEK ' + S.segs.length); setText('score', String(S.score));
   const need = objNeedTotal(); const frac = clamp(1 - objLeftTotal() / Math.max(1, need), 0, 1); const w = (frac * 100).toFixed(1) + '%'; if (hudCache.spool !== w) { hudCache.spool = w; $('spool').style.width = 'calc(' + w + ' - ' + (30 * frac).toFixed(1) + 'px)'; }
   slotEls.forEach((el, k) => { const left = objShownLeft(k); const done = left === 0; const key = 's' + k, v = left + (done ? 'd' : ''); if (hudCache[key] !== v) { hudCache[key] = v; el.querySelector('b').textContent = left; el.classList.toggle('done', done); } });
+  if (level.cfg.time) {
+    const sec = Math.ceil(S.timeLeft - 1e-6); const tm = $('timer');
+    if (hudCache.time !== sec) { hudCache.time = sec; $('t-time').textContent = fmtTime(sec); const low = sec <= TIME_WARN; tm.classList.toggle('low', low); if (low && S.state === 'run') { tm.classList.remove('beat'); void tm.offsetWidth; tm.classList.add('beat'); } }
+    const off = (22.62 * (1 - clamp(S.timeLeft / level.cfg.time, 0, 1))).toFixed(2); if (hudCache.pie !== off) { hudCache.pie = off; $('t-pie').setAttribute('stroke-dashoffset', off); }
+  }
   for (const b of $('boosters').children) { const key = b.dataset.key; b.classList.toggle('active', (key === 'magnet' && S.fx.magnet > 0) || (key === 'ghost' && S.fx.ghost > 0)); }
 }
 const _v = new THREE.Vector3();
@@ -713,8 +749,8 @@ function updateArrow() {
   if (!best) { ar.style.display = 'none'; return; }
   const p = toScreen(best.x, YARN_R, best.z); if (Math.abs(p.nx) < 0.92 && Math.abs(p.ny) < 0.8 && _v.z < 1) { ar.style.display = 'none'; return; }
   const W = window.innerWidth, H = window.innerHeight; const cx = W / 2, cy = H / 2; let dx = p.x - cx, dy = p.y - cy; if (_v.z > 1) { dx = -dx; dy = -dy; }
-  const ang = Math.atan2(dy, dx); const mx = W / 2 - 34, my = H / 2 - 120; const k = Math.min(Math.abs(mx / (Math.cos(ang) || 1e-6)), Math.abs(my / (Math.sin(ang) || 1e-6)));
-  ar.style.display = 'block'; ar.style.transform = 'translate(' + (cx + Math.cos(ang) * k) + 'px,' + (cy + 20 + Math.sin(ang) * k) + 'px)'; ar.querySelector('i').style.transform = 'rotate(' + (ang + Math.PI / 2) + 'rad) translateY(-9px)'; ar.querySelector('i').style.transformOrigin = '50% 31px';
+  const ang = Math.atan2(dy, dx); const mx = W / 2 - 34, my = H / 2 - 130; const k = Math.min(Math.abs(mx / (Math.cos(ang) || 1e-6)), Math.abs(my / (Math.sin(ang) || 1e-6)));   // üstte HUD + süre sayacı, altta booster'lar boş kalır
+  ar.style.display = 'block'; ar.style.transform = 'translate(' + (cx + Math.cos(ang) * k) + 'px,' + (cy + 30 + Math.sin(ang) * k) + 'px)'; ar.querySelector('i').style.transform = 'rotate(' + (ang + Math.PI / 2) + 'rad) translateY(-9px)'; ar.querySelector('i').style.transformOrigin = '50% 31px';
   const img = ar.querySelector('img'); const src = yarnIcon(best.color); if (img.getAttribute('src') !== src) img.src = src;
 }
 
@@ -738,6 +774,7 @@ function update(dt) {
     if (AUTO) autoPlan(dt);
     if (S.fx.magnet > 0) S.fx.magnet = Math.max(0, S.fx.magnet - dt); if (S.fx.ghost > 0) S.fx.ghost = Math.max(0, S.fx.ghost - dt);
     updateSnake(dt); if (S.state === 'run') updateYarns(dt);
+    if (S.state === 'run' && level.cfg.time > 0) updateTimer(dt);
   } else if (S.state === 'ready') { S.hintT += dt; if (AUTO) startRun(); }
   else if (S.state === 'complete') { if (S.celebrateT > 0) { S.celebrateT -= dt; if (S.celebrateT <= 0) showComplete(); } }
   else if (S.state === 'fail') { if (S.failT > 0) { S.failT -= dt; if (S.failT <= 0) showFail(); } }
@@ -775,13 +812,15 @@ function showComplete() {
   const yarnSegs = S.segs.filter(s => s.ci >= 0); const extra = yarnSegs.filter(s => !isTargetColor(s.ci)).length;
   const stars = Math.max(1, 3 - (S.continues > 0 ? 1 : 0) - (extra > yarnSegs.length * 0.35 ? 1 : 0));
   $('c-stars').innerHTML = [1, 2, 3].map(k => '<span class="' + (k <= stars ? '' : 'off') + '">★</span>').join('');
-  objChips($('c-obj'), 'done'); $('c-time').textContent = fmtTime(S.playT); $('c-combo').textContent = S.combos; $('c-score').textContent = S.score;
+  objChips($('c-obj'), 'done'); $('c-time-l').textContent = level.cfg.time ? 'Kalan Süre' : 'Süre'; $('c-time').textContent = fmtTime(level.cfg.time ? Math.ceil(S.timeLeft - 1e-6) : S.playT); $('c-combo').textContent = S.combos; $('c-score').textContent = S.score;
   $('c-knitline').textContent = yarnSegs.length + ' ilmeklik örgü terziye teslim edildi' + (extra > 0 ? ' (' + extra + ' hedef dışı ilmek).' : ' — tertemiz rota!');
   drawKnit($('knit'), S.segs); showScreen('complete');
 }
 function showFail() {
-  $('f-title').textContent = 'Kendine Çarptın!'; $('f-sub').textContent = 'Yılan kendi örgüsüne dolandı. Hedef için kalan:'; objChips($('f-obj'), 'fail');
-  $('f-note').textContent = S.continueUsed ? 'Devam hakkı bu bölümde kullanıldı.' : 'Devam edersen gövdenin %40\'ı kırpılır ve 3 sn hayalet ilmekle (gövdeden geçebilirsin) yola devam edersin.';
+  const time = S.failReason === 'time';
+  $('f-title').textContent = time ? 'Süre Bitti!' : 'Kendine Çarptın!'; $('f-sub').textContent = (time ? 'Süre doldu, örgü yetişmedi.' : 'Yılan kendi örgüsüne dolandı.') + ' Hedef için kalan:'; objChips($('f-obj'), 'fail');
+  $('btn-continue').textContent = time ? 'Devam Et · +' + TIME_CONT + ' sn' : 'Devam Et · Hayalet İlmek';
+  $('f-note').textContent = S.continueUsed ? 'Devam hakkı bu bölümde kullanıldı.' : time ? 'Devam edersen ' + TIME_CONT + ' sn ek süre alır, kaldığın yerden sürersin.' : 'Devam edersen gövdenin %40\'ı kırpılır ve 3 sn hayalet ilmekle (gövdeden geçebilirsin) yola devam edersin.';
   $('btn-continue').disabled = S.continueUsed; showScreen('fail');
 }
 function drawTailor(g, x, y, s) {
@@ -883,7 +922,7 @@ function autoPlan(dt) {
 }
 
 // ---------- mock-up / self-test modu (geliştirici) ----------
-// ?debug=1&mock=intro|hud|hud2|hud3|complete|fail[&level=N&frac=0.5] → ekranı deterministik kurar (dondurur)
+// ?debug=1&mock=intro|hud|hud2|hud3|complete|fail|timeout[&level=N&frac=0.5&tleft=7] → ekranı deterministik kurar (dondurur); tleft = HUD'daki kalan süre
 // ?debug=1&test=1&levels=10 → bölümleri botla oynar, raporu <pre id="test-report">'a yazar
 function stepUntil(cond, maxSec) { const fps = 60; const t0 = performance.now(); for (let n = 0; n < maxSec * fps && !cond() && performance.now() - t0 < 45000; n++) update(1 / fps); }
 function playBotTo(frac) {
@@ -899,8 +938,10 @@ function runMock(name) {
     case 'hud': case 'hud2': case 'hud3': startLevel(lv || (name === 'hud' ? 1 : name === 'hud2' ? 5 : 9)); playBotTo(frac); clean(); showJoy(96, window.innerHeight - 190); setKnob(30, -34); break;
     case 'complete': startLevel(lv || 1); playBotTo(1); stepUntil(() => S.state === 'complete' || S.state === 'fail', 60); clean(); if (S.state === 'complete') { S.celebrateT = 0; showComplete(); } break;
     case 'fail': startLevel(lv || 1); playBotTo(frac); clean(); S.state = 'run'; selfCollide(); S.failT = 0; $('flash').style.opacity = 0; showFail(); break;
+    case 'timeout': startLevel(lv || 1); playBotTo(frac); clean(); S.state = 'run'; timeUp(); S.failT = 0; $('flash').style.opacity = 0; showFail(); break;
     default: startLevel(lv || 1);
   }
+  if (params.has('tleft')) S.timeLeft = parseFloat(params.get('tleft')) || 0;
   updateCamera(0, true); render(0);
 }
 function traceBot(n, secs) {   // ?debug=1&trace=1&level=N → bot hareketini 0.5 sn aralıkla kaydeder (teşhis)
@@ -913,7 +954,7 @@ function selfTest(maxLevel) {
   for (let n = 1; n <= maxLevel; n++) {
     const w0 = performance.now(); startLevel(n); AUTO = true; startRun(); stepUntil(() => S.state === 'complete' || S.state === 'fail', 400); AUTO = false;
     const yarnSegs = S.segs.filter(s => s.ci >= 0); const extra = yarnSegs.filter(s => !isTargetColor(s.ci)).length;
-    rows.push({ n, state: S.state, t: Math.round(S.playT), wall: Math.round(performance.now() - w0), head: [Math.round(S.head.x), Math.round(S.head.z)], bump: S.bumping, dist: Math.round(S.dist), objs: level.objectives.map(o => YARN_COLORS[o.color].name + ':' + o.need + '/' + S.colorCount[o.color]), segs: S.segs.length, extra, speed: +curSpeed().toFixed(1), size: level.cfg.size, field: level.cfg.field, yarnsOnField: level.yarns.length });
+    rows.push({ n, state: S.state, why: S.state === 'fail' ? S.failReason : undefined, limit: level.cfg.time, left: +S.timeLeft.toFixed(1), t: Math.round(S.playT), wall: Math.round(performance.now() - w0), head: [Math.round(S.head.x), Math.round(S.head.z)], bump: S.bumping, dist: Math.round(S.dist), objs: level.objectives.map(o => YARN_COLORS[o.color].name + ':' + o.need + '/' + S.colorCount[o.color]), segs: S.segs.length, extra, speed: +curSpeed().toFixed(1), size: level.cfg.size, field: level.cfg.field, yarnsOnField: level.yarns.length });
   }
   const pre = document.createElement('pre'); pre.id = 'test-report'; pre.style.cssText = 'position:fixed;left:0;top:0;z-index:99;background:#000;color:#0f0;font:11px monospace;margin:0;padding:6px;max-height:100%;overflow:auto';
   pre.textContent = JSON.stringify(rows); document.body.appendChild(pre); return rows;
